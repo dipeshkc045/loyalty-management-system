@@ -1,0 +1,64 @@
+package com.lms.rule.rules;
+
+import com.lms.rule.model.TransactionFact;
+import com.lms.rule.model.MemberActivityFact;
+
+rule "QR Payment Bonus - Customer"
+    when
+        $t : TransactionFact(paymentMethod == "QR", role == "CUSTOMER")
+    then
+        $t.setPointMultiplier($t.getPointMultiplier() * 2.0);
+        System.out.println("Rule applied: QR Customer Bonus (2x)");
+end
+
+rule "QR Payment Bonus - Merchant"
+    when
+        $t : TransactionFact(paymentMethod == "QR", role == "MERCHANT")
+    then
+        $t.setPointMultiplier($t.getPointMultiplier() * 1.5);
+        $t.setBonusPoints($t.getBonusPoints() + 10);
+        System.out.println("Rule applied: QR Merchant Bonus (1.5x + 10 points)");
+end
+
+rule "Platinum Tier - Customer"
+    when
+        $t : TransactionFact(memberTier == "PLATINUM", role == "CUSTOMER")
+    then
+        $t.setPointMultiplier($t.getPointMultiplier() * 2.0);
+end
+
+rule "Platinum Tier - Merchant"
+    when
+        $t : TransactionFact(memberTier == "PLATINUM", role == "MERCHANT")
+    then
+        $t.setBonusPoints($t.getBonusPoints() + 100);
+end
+
+rule "High Volume Bonus - Customer"
+    when
+        $a : MemberActivityFact(transactionCount >= 10)
+        $t : TransactionFact(role == "CUSTOMER")
+    then
+        $t.setBonusPoints($t.getBonusPoints() + 100);
+        System.out.println("Rule applied: High Volume Bonus (100 points)");
+end
+
+rule "High Spender Discount - Merchant"
+    when
+        $a : MemberActivityFact(totalSpent > 5000)
+        $t : TransactionFact(role == "MERCHANT")
+    then
+        $t.setRewardType("DISCOUNT");
+        $t.setDiscountPercentage(10.0);
+        System.out.println("Rule applied: High Spender Merchant Discount (10%)");
+end
+
+rule "Combined Volume and Amount Rule"
+    when
+        // Logic for "Both or One" can be handled here
+        $a : MemberActivityFact((transactionCount >= 5 && totalSpent > 1000))
+        $t : TransactionFact()
+    then
+        $t.setPointMultiplier($t.getPointMultiplier() * 1.2);
+        System.out.println("Rule applied: Combined Volume/Amount (1.2x)");
+end
